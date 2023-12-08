@@ -9,15 +9,26 @@ days = st.slider('Forecast days', min_value=1, max_value=5, help='Select the num
 option = st.selectbox('Select dada to view', ('Temperature', 'Sky'))
 st.subheader(f'{option} for the next {days} days in {place}')
 
+try:
+    if place:
+        # Temp and sky data
+        filtered_data = get_data(place, days)
 
-# def get_data(days):
-#     dates = ['2023-12-01', '2023-12-02', '2023-12-03']
-#     temperatures = [10, 24, 16]
-#     temperatures = [days * i for i in temperatures]
-#     return dates, temperatures
+        if option == 'Temperature':
+            temperatures = [dict['main']['temp'] for dict in filtered_data]
+            days = [dict['dt_txt'] for dict in filtered_data]
+            # Temp plot
+            figure = px.line(x=days, y=temperatures, labels={'x': 'Days', 'y': 'Temperature (C)'})
+            st.plotly_chart(figure)
 
+        if option == 'Sky':
+            images = {'Clear': 'images/sun.png', 'Clouds': 'images/rain.png',
+                      'Rain': 'images/rain.png', 'Snow': 'images/snow.png'}
 
-d, t = get_data(days)
+            sky_condition = [dict['weather'][0]['main'] for dict in filtered_data]
+            image_path = [images[condition] for condition in sky_condition]
 
-figure = px.line(x=d, y=t, labels={'x': 'Days', 'y': 'Temperature'})
-st.plotly_chart(figure)
+            # Sky images
+            st.image(image_path, width=70)
+except KeyError:
+    st.error('Please enter correct city name')
